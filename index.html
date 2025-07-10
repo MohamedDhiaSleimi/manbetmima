@@ -147,35 +147,29 @@
         const categoryFilter = document.getElementById('categoryFilter');
         const priceSort = document.getElementById('priceSort');
 
-        fetch('catalogue.json')
-            .then((response) => response.json())
-            .then((data) => {
-                allPlants = data;
+        Promise.all([
+            fetch('catalogue.json').then((res) => res.json()),
+            fetch('categories.json').then((res) => res.json())
+        ])
+        .then(([plantsData, categoriesData]) => {
+            allPlants = plantsData;
 
-                // Populate categories dropdown dynamically
-                const categories = [
-                    ...new Set(
-                        allPlants
-                            .map((plant) => plant.category)
-                            .filter((cat) => cat && cat.trim() !== '')
-                    ),
-                ].sort();
-
-                categories.forEach((cat) => {
-                    const option = document.createElement('option');
-                    option.value = cat;
-                    option.textContent = cat;
-                    categoryFilter.appendChild(option);
-                });
-
-                filterAndDisplayPlants();
-            })
-            .catch((error) => {
-                console.error('Erreur lors du chargement des plantes :', error);
-                showNoResults(
-                    'Erreur lors du chargement du catalogue. Veuillez réessayer plus tard.'
-                );
+            // Populate categories dropdown from categories.json
+            categoriesData.sort().forEach((cat) => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                categoryFilter.appendChild(option);
             });
+
+            filterAndDisplayPlants();
+        })
+        .catch((error) => {
+            console.error('Erreur lors du chargement des données :', error);
+            showNoResults(
+                'Erreur lors du chargement du catalogue. Veuillez réessayer plus tard.'
+            );
+        });
 
         function filterAndDisplayPlants() {
             const searchTerm = searchInput.value.toLowerCase();
@@ -246,7 +240,7 @@
                             <p class="card-text text-muted flex-grow-1">${plant.description}</p>
                             <span class="badge price-badge align-self-start">${parseFloat(
                                 plant.price
-                            ).toFixed(2)} €</span>
+                            ).toFixed(2)} TND</span>
                         </div>
                     </div>
                 </div>
