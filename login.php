@@ -2,7 +2,7 @@
 session_start();
 
 // Hachage SHA-256 de 'admin123'
-$admin_password_hash = '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9';
+$admin_password_hash = 'ee674bcc38e082a560bb31b0a73c7e6070191e0d80226a66198247976fe83703';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -24,6 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Connexion Admin - Catalogue de Plantes</title>
+<link rel="icon" href="emoji.png" type="image/png" />
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
