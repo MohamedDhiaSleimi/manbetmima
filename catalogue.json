@@ -1,0 +1,44 @@
+[
+  {
+    "name": "Aloe Vera",
+    "price": "15.99",
+    "category": "Succulents",
+    "image": "https://images.unsplash.com/photo-1509423350716-97f2360af400?w=400&h=300&fit=crop",
+    "description": "Easy-care succulent with healing properties. Perfect for beginners and great for skin care."
+  },
+  {
+    "name": "Fiddle Leaf Fig",
+    "price": "45.99",
+    "category": "Indoor Plants",
+    "image": "https://images.unsplash.com/photo-1586093248710-d4d905c8b7cc?w=400&h=300&fit=crop",
+    "description": "Popular indoor tree with large, glossy leaves. Makes a stunning statement piece."
+  },
+  {
+    "name": "Snake Plant",
+    "price": "25.99",
+    "category": "Indoor Plants",
+    "image": "https://images.unsplash.com/photo-1593691509543-c55fb32d8de5?w=400&h=300&fit=crop",
+    "description": "Nearly indestructible plant that purifies air. Great for low-light conditions."
+  },
+  {
+    "name": "Monstera Deliciosa",
+    "price": "35.99",
+    "category": "Indoor Plants",
+    "image": "https://images.unsplash.com/photo-1587678161639-5735-4c5d-9e81-1e9c2e5a1c4f?w=400&h=300&fit=crop",
+    "description": "Instagram-famous plant with split leaves. Loves bright, indirect light."
+  },
+  {
+    "name": "Lavender",
+    "price": "18.99",
+    "category": "Herbs",
+    "image": "https://images.unsplash.com/photo-1597005133928-3dd8f90a9c7c?w=400&h=300&fit=crop",
+    "description": "Fragrant herb perfect for cooking, aromatherapy, and attracting pollinators."
+  },
+  {
+    "name": "Peace Lily",
+    "price": "22.99",
+    "category": "Indoor Plants",
+    "image": "https://images.unsplash.com/photo-1537623231804-6c9e73b76edc?w=400&h=300&fit=crop",
+    "description": "Elegant flowering plant that signals when it needs water. Great air purifier."
+  }
+]
