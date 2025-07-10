@@ -1,47 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌱 Green Haven Plant Catalogue</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>🌱 Catalogue de Plantes ManbetMiMa</title>
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    />
+    <link
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        rel="stylesheet"
+    />
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
         }
-        
-        .header-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        
+
+        .header-card,
         .plant-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
         }
-        
+
         .plant-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
         }
-        
+
         .plant-image {
             height: 200px;
             object-fit: cover;
             transition: transform 0.3s ease;
         }
-        
+
         .plant-card:hover .plant-image {
             transform: scale(1.05);
         }
-        
+
         .admin-btn {
             position: fixed;
             bottom: 20px;
@@ -49,28 +49,28 @@
             z-index: 1000;
             border-radius: 50px;
             padding: 15px 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
-        
+
         .search-box {
             border-radius: 50px;
             padding: 12px 20px;
             border: 2px solid #e9ecef;
             background: rgba(255, 255, 255, 0.9);
         }
-        
+
         .search-box:focus {
             box-shadow: 0 0 0 0.2rem rgba(45, 90, 39, 0.25);
             border-color: #2d5a27;
         }
-        
+
         .price-badge {
             background: #e74c3c;
             color: white;
             font-size: 1.2em;
             font-weight: bold;
         }
-        
+
         .category-badge {
             background: #2d5a27;
             font-size: 0.8em;
@@ -79,41 +79,61 @@
 </head>
 <body>
     <div class="container py-4">
-        <!-- Header -->
+        <!-- En-tête -->
         <div class="card header-card mb-4">
             <div class="card-body text-center py-5">
-                <h1 class="display-4 text-success mb-3">🌱 Green Haven Plant Catalogue</h1>
-                <p class="lead text-muted mb-4">Discover your perfect green companion</p>
-                <div class="row justify-content-center">
-                    <div class="col-md-6">
+                <h1 class="display-4 text-success mb-3">🌱 Catalogue de Plantes Green Haven</h1>
+                <p class="lead text-muted mb-4">Trouvez votre compagnon vert idéal</p>
+
+                <div class="row justify-content-center g-2">
+                    <div class="col-md-4">
                         <div class="input-group">
                             <span class="input-group-text bg-white border-end-0">
                                 <i class="fas fa-search text-muted"></i>
                             </span>
-                            <input type="text" class="form-control search-box border-start-0" 
-                                   placeholder="Search plants..." id="searchInput">
+                            <input
+                                type="text"
+                                class="form-control search-box border-start-0"
+                                placeholder="Rechercher une plante..."
+                                id="searchInput"
+                            />
                         </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <select class="form-select search-box" id="categoryFilter">
+                            <option value="">Toutes les catégories</option>
+                            <!-- Categories loaded dynamically -->
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <select class="form-select search-box" id="priceSort">
+                            <option value="">Trier par prix</option>
+                            <option value="asc">Prix croissant</option>
+                            <option value="desc">Prix décroissant</option>
+                        </select>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Plants Grid -->
+        <!-- Grille des plantes -->
         <div class="row" id="plantsGrid">
-            <!-- Plants will be loaded here -->
+            <!-- Les plantes seront chargées ici -->
         </div>
 
-        <!-- No Results -->
+        <!-- Aucun résultat -->
         <div class="card text-center d-none" id="noResults">
             <div class="card-body py-5">
                 <i class="fas fa-seedling fa-3x text-muted mb-3"></i>
-                <h4 class="text-muted">No plants found</h4>
-                <p class="text-muted">Try adjusting your search terms</p>
+                <h4 class="text-muted">Aucune plante trouvée</h4>
+                <p class="text-muted">Essayez de modifier vos termes de recherche</p>
             </div>
         </div>
     </div>
 
-    <!-- Admin Button -->
+    <!-- Bouton Admin -->
     <a href="login.php" class="btn btn-success admin-btn">
         <i class="fas fa-cog me-2"></i>Admin
     </a>
@@ -121,62 +141,124 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let allPlants = [];
+        let filteredPlants = [];
 
-        // Load plants from JSON
+        const searchInput = document.getElementById('searchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const priceSort = document.getElementById('priceSort');
+
         fetch('catalogue.json')
-            .then(response => response.json())
-            .then(data => {
+            .then((response) => response.json())
+            .then((data) => {
                 allPlants = data;
-                displayPlants(allPlants);
+
+                // Populate categories dropdown dynamically
+                const categories = [
+                    ...new Set(
+                        allPlants
+                            .map((plant) => plant.category)
+                            .filter((cat) => cat && cat.trim() !== '')
+                    ),
+                ].sort();
+
+                categories.forEach((cat) => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    categoryFilter.appendChild(option);
+                });
+
+                filterAndDisplayPlants();
             })
-            .catch(error => {
-                console.error('Error loading plants:', error);
-                showNoResults('Error loading plant catalogue. Please try again later.');
+            .catch((error) => {
+                console.error('Erreur lors du chargement des plantes :', error);
+                showNoResults(
+                    'Erreur lors du chargement du catalogue. Veuillez réessayer plus tard.'
+                );
             });
 
-        // Search functionality
-        document.getElementById('searchInput').addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            const filteredPlants = allPlants.filter(plant => 
-                plant.name.toLowerCase().includes(searchTerm) ||
-                (plant.category && plant.category.toLowerCase().includes(searchTerm)) ||
-                plant.description.toLowerCase().includes(searchTerm)
-            );
+        function filterAndDisplayPlants() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedCategory = categoryFilter.value;
+            const sortOrder = priceSort.value;
+
+            // Filter plants by search term and category
+            filteredPlants = allPlants.filter((plant) => {
+                const matchesSearch =
+                    plant.name.toLowerCase().includes(searchTerm) ||
+                    (plant.category &&
+                        plant.category.toLowerCase().includes(searchTerm)) ||
+                    plant.description.toLowerCase().includes(searchTerm);
+                const matchesCategory =
+                    !selectedCategory || plant.category === selectedCategory;
+                return matchesSearch && matchesCategory;
+            });
+
+            // Sort plants by price if requested
+            if (sortOrder === 'asc') {
+                filteredPlants.sort(
+                    (a, b) => parseFloat(a.price) - parseFloat(b.price)
+                );
+            } else if (sortOrder === 'desc') {
+                filteredPlants.sort(
+                    (a, b) => parseFloat(b.price) - parseFloat(a.price)
+                );
+            }
+
             displayPlants(filteredPlants);
-        });
+        }
+
+        // Event listeners for all controls
+        searchInput.addEventListener('input', filterAndDisplayPlants);
+        categoryFilter.addEventListener('change', filterAndDisplayPlants);
+        priceSort.addEventListener('change', filterAndDisplayPlants);
 
         function displayPlants(plants) {
             const grid = document.getElementById('plantsGrid');
             const noResults = document.getElementById('noResults');
-            
+
             if (plants.length === 0) {
                 grid.innerHTML = '';
                 noResults.classList.remove('d-none');
                 return;
             }
-            
+
             noResults.classList.add('d-none');
-            
-            grid.innerHTML = plants.map(plant => `
+
+            grid.innerHTML = plants
+                .map(
+                    (plant) => `
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="card plant-card h-100">
-                        <img src="${plant.image}" class="card-img-top plant-image" alt="${plant.name}" 
-                             onerror="this.src='https://via.placeholder.com/400x200/2d5a27/ffffff?text=Plant+Image'">
+                        <img
+                            src="${plant.image}"
+                            class="card-img-top plant-image"
+                            alt="${plant.name}"
+                            onerror="this.src='https://via.placeholder.com/400x200/2d5a27/ffffff?text=Image+plante'"
+                        />
                         <div class="card-body d-flex flex-column">
-                            ${plant.category ? `<span class="badge category-badge mb-2 align-self-start">${plant.category}</span>` : ''}
+                            ${
+                                plant.category
+                                    ? `<span class="badge category-badge mb-2 align-self-start">${plant.category}</span>`
+                                    : ''
+                            }
                             <h5 class="card-title text-success">${plant.name}</h5>
                             <p class="card-text text-muted flex-grow-1">${plant.description}</p>
-                            <span class="badge price-badge align-self-start">$${parseFloat(plant.price).toFixed(2)}</span>
+                            <span class="badge price-badge align-self-start">${parseFloat(
+                                plant.price
+                            ).toFixed(2)} €</span>
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `
+                )
+                .join('');
         }
 
         function showNoResults(message) {
             const grid = document.getElementById('plantsGrid');
             const noResults = document.getElementById('noResults');
-            
+
             grid.innerHTML = '';
             noResults.classList.remove('d-none');
             noResults.querySelector('p').textContent = message;

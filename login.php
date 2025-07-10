@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// SHA-256 hash of 'admin123'
+// Hachage SHA-256 de 'admin123'
 $admin_password_hash = '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9';
 $error = '';
 
