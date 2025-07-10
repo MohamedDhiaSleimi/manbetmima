@@ -12,21 +12,50 @@ $categories_file = 'categories.json';
 $catalogue = [];
 $categories = [];
 
-if (file_exists($catalogue_file)) {
-    $json_content = file_get_contents($catalogue_file);
-    $catalogue = json_decode($json_content, true);
-    if ($catalogue === null) {
-        $catalogue = [];
-    }
-}
-
+// Load or initialize categories.json with fallback logic
 if (file_exists($categories_file)) {
     $json_categories = file_get_contents($categories_file);
     $categories = json_decode($json_categories, true);
     if ($categories === null) {
         $categories = [];
     }
+} else {
+    // categories.json missing
+    if (file_exists($catalogue_file)) {
+        // Load catalogue.json and extract unique categories
+        $json_catalogue = file_get_contents($catalogue_file);
+        $catalogue_tmp = json_decode($json_catalogue, true);
+        if ($catalogue_tmp === null) {
+            $catalogue_tmp = [];
+        }
+        $unique_categories = [];
+        foreach ($catalogue_tmp as $plant) {
+            if (!empty($plant['category']) && !in_array($plant['category'], $unique_categories)) {
+                $unique_categories[] = $plant['category'];
+            }
+        }
+        $categories = $unique_categories;
+        // Save categories.json
+        file_put_contents($categories_file, json_encode($categories, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    } else {
+        // Neither file exists, create both empty
+        $categories = [];
+        file_put_contents($categories_file, json_encode($categories, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        file_put_contents($catalogue_file, json_encode([], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    }
 }
+
+// Load catalogue.json (must be done after above fallback to ensure file exists)
+if (file_exists($catalogue_file)) {
+    $json_content = file_get_contents($catalogue_file);
+    $catalogue = json_decode($json_content, true);
+    if ($catalogue === null) {
+        $catalogue = [];
+    }
+} else {
+    $catalogue = [];
+}
+
 
 $message = '';
 $error = '';
