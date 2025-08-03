@@ -8,9 +8,45 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
 
 $catalogue_file = 'catalogue.json';
 $categories_file = 'categories.json';
+$contact_file = 'contact.json';
 
 $catalogue = [];
 $categories = [];
+$default_contact = [
+    'email' => '',
+    'phone' => '',
+    'facebook' => '',
+    'instagram' => '',
+    'whatsapp' => '',
+    'tiktok' => '',
+    'twitter' => '',
+    'bluesky' => ''
+];
+
+// Create contact.json if it does not exist
+if (!file_exists($contact_file)) {
+    file_put_contents($contact_file, json_encode($default_contact, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+}
+$contact_data = json_decode(file_get_contents($contact_file), true);
+if (!is_array($contact_data)) {
+    $contact_data = $default_contact;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_contact') {
+    $updated_contact = [
+        'email' => trim($_POST['email']),
+        'phone' => trim($_POST['phone']),
+        'facebook' => trim($_POST['facebook']),
+        'instagram' => trim($_POST['instagram']),
+        'whatsapp' => trim($_POST['whatsapp']),
+        'tiktok' => trim($_POST['tiktok']),
+        'twitter' => trim($_POST['twitter']),
+        'bluesky' => trim($_POST['bluesky']),
+    ];
+    file_put_contents($contact_file, json_encode($updated_contact, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    $contact_data = $updated_contact;
+    $message = "Coordonnées mises à jour avec succès.";
+}
 
 // Load or initialize categories.json with fallback logic
 if (file_exists($categories_file)) {
@@ -20,9 +56,7 @@ if (file_exists($categories_file)) {
         $categories = [];
     }
 } else {
-    // categories.json missing
     if (file_exists($catalogue_file)) {
-        // Load catalogue.json and extract unique categories
         $json_catalogue = file_get_contents($catalogue_file);
         $catalogue_tmp = json_decode($json_catalogue, true);
         if ($catalogue_tmp === null) {
@@ -35,17 +69,14 @@ if (file_exists($categories_file)) {
             }
         }
         $categories = $unique_categories;
-        // Save categories.json
         file_put_contents($categories_file, json_encode($categories, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     } else {
-        // Neither file exists, create both empty
         $categories = [];
         file_put_contents($categories_file, json_encode($categories, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
         file_put_contents($catalogue_file, json_encode([], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
     }
 }
 
-// Load catalogue.json (must be done after above fallback to ensure file exists)
 if (file_exists($catalogue_file)) {
     $json_content = file_get_contents($catalogue_file);
     $catalogue = json_decode($json_content, true);
@@ -56,11 +87,9 @@ if (file_exists($catalogue_file)) {
     $catalogue = [];
 }
 
-
-$message = '';
+$message = $message ?? '';
 $error = '';
 
-// Determine if editing a plant (show edit form)
 $edit_plant_index = null;
 $edit_plant_data = null;
 
@@ -75,7 +104,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     'image' => trim($_POST['image']),
                     'description' => trim($_POST['description'])
                 ];
-                
                 if (empty($new_plant['name']) || empty($new_plant['price']) || empty($new_plant['description'])) {
                     $error = 'Veuillez remplir tous les champs obligatoires.';
                 } else {
@@ -83,13 +111,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     if (file_put_contents($catalogue_file, json_encode($catalogue, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
                         $message = 'Plante ajoutée avec succès !';
                     } else {
-                        $error = 'Erreur lors de l’enregistrement. Vérifiez les permissions du fichier.';
+                        $error = 'Erreur lors de l\'enregistrement. Vérifiez les permissions du fichier.';
                     }
                 }
                 break;
 
             case 'start_edit_plant':
-                // Show the edit form for selected plant
                 $index = (int)($_POST['index'] ?? -1);
                 if (isset($catalogue[$index])) {
                     $edit_plant_index = $index;
@@ -117,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if (empty($updated_plant['name']) || empty($updated_plant['price']) || empty($updated_plant['description'])) {
                     $error = 'Veuillez remplir tous les champs obligatoires.';
                     $edit_plant_index = $index;
-                    $edit_plant_data = $updated_plant; // keep form filled with submitted data
+                    $edit_plant_data = $updated_plant;
                 } else {
                     $catalogue[$index] = $updated_plant;
                     if (file_put_contents($catalogue_file, json_encode($catalogue, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
@@ -154,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     if (file_put_contents($categories_file, json_encode($categories, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
                         $message = 'Catégorie ajoutée avec succès !';
                     } else {
-                        $error = 'Erreur lors de l’enregistrement de la catégorie.';
+                        $error = 'Erreur lors de l\'enregistrement de la catégorie.';
                     }
                 }
                 break;
@@ -194,41 +221,335 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Panneau d'administration - Catalogue de Plantes</title>
-    <link rel="icon" href="emoji.png" type="image/png" />
+    <title>Administration - Manbet MiMa</title>
     <link rel="icon" href="emoji.png" type="image/png" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
     <style>
-       body {
-    background: linear-gradient(135deg, #e6f4ea 0%, #c8e6c9 100%);
-    min-height: 100vh;
-}
+        :root {
+            --bg-light: #f0fdf4;
+            --bg-dark: #121212;
+            --text-light: #2d2d2d;
+            --text-dark: #f5f5f5;
+            --card-bg-light: #ffffff;
+            --card-bg-dark: #1e1e1e;
+            --accent-light: #22c55e;
+            --accent-dark: #16a34a;
+            --desc-light: #6b7280;
+            --desc-dark: #cccccc;
+            --card-border-dark: #333;
+            --success-light: #d1fae5;
+            --success-dark: #065f46;
+        }
+
+        html {
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        [data-theme="dark"] {
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
+        }
+
+        [data-theme="dark"] body {
+            background: var(--bg-dark);
+            color: var(--text-dark);
+        }
+
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background: var(--bg-light);
+            color: var(--text-light);
+            min-height: 100vh;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        .admin-header {
+            background: var(--card-bg-light);
+            padding: 1.5rem 0;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 1050;
+            transition: background-color 0.3s ease;
+        }
+
+        [data-theme="dark"] .admin-header {
+            background: var(--card-bg-dark);
+        }
 
         .admin-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+            background: var(--card-bg-light);
+            border: 1px solid #e0e0e0;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        [data-theme="dark"] .admin-card {
+            background: var(--card-bg-dark);
+            border: 1px solid var(--card-border-dark);
+            color: var(--text-dark);
+        }
+
+        .admin-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-control, .form-select {
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            padding: 12px 16px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: var(--card-bg-light);
+            color: var(--text-light);
+        }
+
+        [data-theme="dark"] .form-control,
+        [data-theme="dark"] .form-select {
+            background: #2a2a2a;
+            border-color: #404040;
+            color: var(--text-dark);
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent-light);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .btn {
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 500;
+            transition: all 0.3s ease;
             border: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary {
+            background: var(--accent-light);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-outline-danger:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-outline-primary:hover {
+            transform: translateY(-1px);
+        }
+
+        .plant-card {
+            background: var(--card-bg-light);
+            border: 1px solid #e0e0e0;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] .plant-card {
+            background: var(--card-bg-dark);
+            border: 1px solid var(--card-border-dark);
+        }
+
+        .plant-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .plant-image {
+            height: 200px;
+            object-fit: cover;
+            width: 100%;
+        }
+
+        .image-fallback {
+            height: 200px;
+            background: var(--accent-light);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .price-badge {
+            background: var(--accent-light);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .category-badge {
+            background: var(--success-light);
+            color: var(--success-dark);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .dark-toggle {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--accent-light);
+            transition: all 0.3s ease;
+        }
+
+        .dark-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 16px 20px;
+        }
+
+        .section-header {
+            border-bottom: 3px solid var(--accent-light);
+            padding-bottom: 12px;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, var(--accent-light), var(--accent-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, var(--accent-light), var(--accent-dark));
+            color: white;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .form-floating {
+            margin-bottom: 20px;
+        }
+
+        .form-floating > .form-control,
+        .form-floating > .form-select {
+            height: auto;
+            padding: 16px 12px 8px 12px;
+        }
+
+        .form-floating > label {
+            padding: 16px 12px;
+            color: var(--desc-light);
+        }
+
+        [data-theme="dark"] .form-floating > label {
+            color: var(--desc-dark);
+        }
+
+        .table {
+            background: var(--card-bg-light);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        [data-theme="dark"] .table {
+            background: var(--card-bg-dark);
+            color: var(--text-dark);
+        }
+
+        .table th {
+            background: var(--accent-light);
+            color: white;
+            border: none;
+            padding: 16px;
+        }
+
+        .table td {
+            padding: 16px;
+            border-color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .table td {
+            border-color: #404040;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+            
+            .btn {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+            
+            .form-control, .form-select {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
         }
     </style>
 </head>
+
 <body>
-    <div class="container py-4">
-        <!-- En-tête -->
-        <div class="card admin-card mb-4">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <h1 class="h2 text-success mb-0"><i class="fas fa-cog me-2"></i>Panneau d'administration</h1>
+    <!-- Modern Header -->
+    <div class="admin-header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <div>
-                    <a href="index.html" class="btn btn-outline-secondary me-2"><i class="fas fa-eye me-2"></i>Voir le site</a>
-                    <a href="logout.php" class="btn btn-outline-danger"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a>
+                    <h1 class="h2 text-success mb-0">
+                        <i class="fas fa-cog me-2"></i>Administration Manbet MiMa
+                    </h1>
+                    <p class="text-muted mb-0 mt-1">Gérez votre catalogue de plantes</p>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="dark-toggle" id="themeToggle" title="Mode sombre">
+                        <i class="fa-solid fa-moon" id="themeIcon"></i>
+                    </span>
+                    <a href="index.html" class="btn btn-outline-secondary">
+                        <i class="fas fa-eye me-2"></i>Voir le site
+                    </a>
+                    <a href="logout.php" class="btn btn-outline-danger">
+                        <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                    </a>
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="container py-5">
+     
 
         <!-- Messages -->
         <?php if ($message): ?>
@@ -246,105 +567,135 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         <?php if ($edit_plant_index !== null && $edit_plant_data !== null): ?>
             <!-- Edit Plant Form -->
-            <div class="card admin-card mb-4">
-                <div class="card-header">
-                    <h3 class="h5 mb-0"><i class="fas fa-edit me-2"></i>Modifier la plante</h3>
-                </div>
-                <div class="card-body">
+            <div class="admin-card mb-5">
+                <div class="card-body p-4">
+                    <h3 class="section-header">
+                        <i class="fas fa-edit me-2"></i>Modifier la plante
+                    </h3>
                     <form method="POST">
                         <input type="hidden" name="action" value="edit_plant" />
                         <input type="hidden" name="index" value="<?php echo $edit_plant_index; ?>" />
+                        
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_name" class="form-label">Nom de la plante *</label>
-                                <input type="text" class="form-control" id="edit_name" name="name" value="<?php echo htmlspecialchars($edit_plant_data['name']); ?>" required />
+                            <div class="col-lg-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="edit_name" name="name" 
+                                           value="<?php echo htmlspecialchars($edit_plant_data['name']); ?>" required />
+                                    <label for="edit_name">Nom de la plante *</label>
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_price" class="form-label">Prix *</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">TND</span>
-                                    <input type="number" class="form-control" id="edit_price" name="price" step="0.01" min="0" value="<?php echo htmlspecialchars($edit_plant_data['price']); ?>" required />
+                            <div class="col-lg-6">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="edit_price" name="price" 
+                                           step="0.01" min="0" value="<?php echo htmlspecialchars($edit_plant_data['price']); ?>" required />
+                                    <label for="edit_price">Prix (TND) *</label>
                                 </div>
                             </div>
                         </div>
+
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_category" class="form-label">Catégorie</label>
-                                <select class="form-select" id="edit_category" name="category">
-                                    <option value="">Sélectionner une catégorie</option>
-                                    <?php foreach ($categories as $cat): ?>
-                                        <option value="<?php echo htmlspecialchars($cat); ?>" <?php if (($edit_plant_data['category'] ?? '') === $cat) echo 'selected'; ?>>
-                                            <?php echo htmlspecialchars($cat); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
+                            <div class="col-lg-6">
+                                <div class="form-floating">
+                                    <select class="form-select" id="edit_category" name="category">
+                                        <option value="">Sélectionner une catégorie</option>
+                                        <?php foreach ($categories as $cat): ?>
+                                            <option value="<?php echo htmlspecialchars($cat); ?>" 
+                                                    <?php if (($edit_plant_data['category'] ?? '') === $cat) echo 'selected'; ?>>
+                                                <?php echo htmlspecialchars($cat); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <label for="edit_category">Catégorie</label>
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="edit_image" class="form-label">URL de l'image</label>
-                                <input type="url" class="form-control" id="edit_image" name="image" placeholder="https://exemple.com/image.jpg" value="<?php echo htmlspecialchars($edit_plant_data['image']); ?>" />
+                            <div class="col-lg-6">
+                                <div class="form-floating">
+                                    <input type="url" class="form-control" id="edit_image" name="image" 
+                                           value="<?php echo htmlspecialchars($edit_plant_data['image']); ?>" />
+                                    <label for="edit_image">URL de l'image</label>
+                                </div>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="edit_description" class="form-label">Description *</label>
-                            <textarea class="form-control" id="edit_description" name="description" rows="3" required><?php echo htmlspecialchars($edit_plant_data['description']); ?></textarea>
+
+                        <div class="form-floating">
+                            <textarea class="form-control" id="edit_description" name="description" 
+                                      style="height: 120px;" required><?php echo htmlspecialchars($edit_plant_data['description']); ?></textarea>
+                            <label for="edit_description">Description *</label>
                         </div>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-2"></i>Enregistrer les modifications
-                        </button>
-                        <a href="admin.php" class="btn btn-secondary ms-2">Annuler</a>
+
+                        <div class="d-flex gap-3 flex-wrap">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Enregistrer les modifications
+                            </button>
+                            <a href="admin.php" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Annuler
+                            </a>
+                        </div>
                     </form>
                 </div>
             </div>
         <?php else: ?>
-            <!-- Ajouter une plante -->
-            <div class="card admin-card mb-4">
-                <div class="card-header">
-                    <h3 class="h5 mb-0"><i class="fas fa-plus me-2"></i>Ajouter une plante</h3>
-                </div>
-                <div class="card-body">
+            <!-- Add Plant Form -->
+            <div class="admin-card mb-5">
+                <div class="card-body p-4">
+                    <h3 class="section-header">
+                        <i class="fas fa-plus me-2"></i>Ajouter une nouvelle plante
+                    </h3>
                     <form method="POST">
                         <input type="hidden" name="action" value="add_plant" />
+                        
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="name" class="form-label">Nom de la plante *</label>
-                                <input type="text" class="form-control" id="name" name="name" required />
+                            <div class="col-lg-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="name" name="name" required />
+                                    <label for="name">Nom de la plante *</label>
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="price" class="form-label">Prix *</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" id="price" name="price" step="0.01" min="0" required />
+                            <div class="col-lg-6">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="price" name="price" 
+                                           step="0.01" min="0" required />
+                                    <label for="price">Prix (TND) *</label>
                                 </div>
                             </div>
                         </div>
+
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="category" class="form-label">Catégorie</label>
-                                <select class="form-select" id="category" name="category">
-                                    <option value="">Sélectionner une catégorie</option>
-                                    <?php foreach ($categories as $cat): ?>
-                                        <option value="<?php echo htmlspecialchars($cat); ?>"><?php echo htmlspecialchars($cat); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                            <div class="col-lg-6">
+                                <div class="form-floating">
+                                    <select class="form-select" id="category" name="category">
+                                        <option value="">Sélectionner une catégorie</option>
+                                        <?php foreach ($categories as $cat): ?>
+                                            <option value="<?php echo htmlspecialchars($cat); ?>">
+                                                <?php echo htmlspecialchars($cat); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <label for="category">Catégorie</label>
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="image" class="form-label">URL de l'image</label>
-                                <input type="url" class="form-control" id="image" name="image" placeholder="https://exemple.com/image.jpg" />
+                            <div class="col-lg-6">
+                                <div class="form-floating">
+                                    <input type="url" class="form-control" id="image" name="image" />
+                                    <label for="image">URL de l'image</label>
+                                </div>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="description" class="form-label">Description *</label>
-                            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+
+                        <div class="form-floating">
+                            <textarea class="form-control" id="description" name="description" 
+                                      style="height: 120px;" required></textarea>
+                            <label for="description">Description *</label>
                         </div>
+
                         <button type="submit" class="btn btn-success">
-                            <i class="fas fa-plus me-2"></i>Ajouter
+                            <i class="fas fa-plus me-2"></i>Ajouter la plante
                         </button>
                     </form>
                 </div>
             </div>
         <?php endif; ?>
-
-        <!-- Liste des plantes -->
+    <!-- Liste des plantes -->
         <div class="card admin-card mb-4">
             <div class="card-header">
                 <h3 class="h5 mb-0"><i class="fas fa-list me-2"></i>Plantes enregistrées (<?php echo count($catalogue); ?>)</h3>
@@ -447,6 +798,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
         </div>
     </div>
+
+<!-- Coordonnées de Contact -->
+<div class="container mb-5">
+    <div class="card admin-card">
+        <div class="card-header">
+            <h3 class="h5 mb-0"><i class="fas fa-address-card me-2"></i>Coordonnées de Contact</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <input type="hidden" name="action" value="update_contact" />
+                <div class="row g-3">
+                    <?php foreach ($default_contact as $key => $val): ?>
+                        <div class="col-md-6">
+                            <label for="<?php echo $key; ?>" class="form-label text-capitalize"><?php echo ucfirst($key); ?></label>
+                            <input type="text" class="form-control" id="<?php echo $key; ?>" name="<?php echo $key; ?>" value="<?php echo htmlspecialchars($contact_data[$key] ?? ''); ?>">
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <button type="submit" class="btn btn-success mt-3">
+                    <i class="fas fa-save me-2"></i>Enregistrer les informations
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
