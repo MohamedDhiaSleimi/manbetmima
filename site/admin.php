@@ -2,14 +2,16 @@
 session_start();
 
 if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header('Location: login.php');
+    header('Location: login');
     exit();
 }
 
 $catalogue_file = 'catalogue.json';
 $categories_file = 'categories.json';
 $contact_file = 'contact.json';
+$about_file = 'about.json';
 
+$about = [];
 $catalogue = [];
 $categories = [];
 $default_contact = [
@@ -23,6 +25,11 @@ $default_contact = [
     'bluesky' => ''
 ];
 
+$default_about = [
+    'header' => 'À propos de nous',
+    'content' => 'Bienvenue dans notre univers de plantes. Nous sommes passionnés par la nature et nous vous proposons une large sélection de plantes pour embellir votre espace de vie.'
+];
+
 // Create contact.json if it does not exist
 if (!file_exists($contact_file)) {
     file_put_contents($contact_file, json_encode($default_contact, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
@@ -32,20 +39,49 @@ if (!is_array($contact_data)) {
     $contact_data = $default_contact;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_contact') {
-    $updated_contact = [
-        'email' => trim($_POST['email']),
-        'phone' => trim($_POST['phone']),
-        'facebook' => trim($_POST['facebook']),
-        'instagram' => trim($_POST['instagram']),
-        'whatsapp' => trim($_POST['whatsapp']),
-        'tiktok' => trim($_POST['tiktok']),
-        'twitter' => trim($_POST['twitter']),
-        'bluesky' => trim($_POST['bluesky']),
-    ];
-    file_put_contents($contact_file, json_encode($updated_contact, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-    $contact_data = $updated_contact;
-    $message = "Coordonnées mises à jour avec succès.";
+// Create about.json if it does not exist
+if (!file_exists($about_file)) {
+    file_put_contents($about_file, json_encode($default_about, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+}
+$about_data = json_decode(file_get_contents($about_file), true);
+if (!is_array($about_data)) {
+    $about_data = $default_about;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    if ($_POST['action'] === 'update_contact') {
+        $updated_contact = [
+            'email' => trim($_POST['email']),
+            'phone' => trim($_POST['phone']),
+            'facebook' => trim($_POST['facebook']),
+            'instagram' => trim($_POST['instagram']),
+            'whatsapp' => trim($_POST['whatsapp']),
+            'tiktok' => trim($_POST['tiktok']),
+            'twitter' => trim($_POST['twitter']),
+            'bluesky' => trim($_POST['bluesky']),
+        ];
+        file_put_contents($contact_file, json_encode($updated_contact, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        $contact_data = $updated_contact;
+        $message = "Coordonnées mises à jour avec succès.";
+    }
+    
+    if ($_POST['action'] === 'update_about') {
+        $updated_about = [
+            'header' => trim($_POST['about_header']),
+            'content' => trim($_POST['about_content']),
+        ];
+        
+        if (empty($updated_about['header']) || empty($updated_about['content'])) {
+            $error = 'Veuillez remplir tous les champs de la section À propos.';
+        } else {
+            if (file_put_contents($about_file, json_encode($updated_about, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
+                $about_data = $updated_about;
+                $message = "Section À propos mise à jour avec succès.";
+            } else {
+                $error = "Erreur lors de la mise à jour de la section À propos.";
+            }
+        }
+    }
 }
 
 // Load or initialize categories.json with fallback logic
@@ -88,7 +124,7 @@ if (file_exists($catalogue_file)) {
 }
 
 $message = $message ?? '';
-$error = '';
+$error = $error ?? '';
 
 $edit_plant_index = null;
 $edit_plant_data = null;
@@ -537,10 +573,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <span class="dark-toggle" id="themeToggle" title="Mode sombre">
                         <i class="fa-solid fa-moon" id="themeIcon"></i>
                     </span>
-                    <a href="index.html" class="btn btn-outline-secondary">
+                    <a href="index" class="btn btn-outline-secondary">
                         <i class="fas fa-eye me-2"></i>Voir le site
                     </a>
-                    <a href="logout.php" class="btn btn-outline-danger">
+                    <a href="logout" class="btn btn-outline-danger">
                         <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
                     </a>
                 </div>
@@ -627,7 +663,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>Enregistrer les modifications
                             </button>
-                            <a href="admin.php" class="btn btn-secondary">
+                            <a href="admin" class="btn btn-secondary">
                                 <i class="fas fa-times me-2"></i>Annuler
                             </a>
                         </div>
@@ -821,6 +857,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </button>
             </form>
         </div>
+    </div>
+</div>
+<!-- gestion de page a propos -->
+<div class="container mb-5" style="padding-left: 1.5rem; padding-right: 1.5rem;">
+    <div class="card admin-card" style="padding: 1.75rem 2rem;">
+        <h3 class="section-header mb-4">
+            <i class="fas fa-info-circle me-2"></i>Section À propos
+        </h3>
+        <form method="POST">
+            <input type="hidden" name="action" value="update_about" />
+            
+            <div class="form-floating mb-4">
+                <input type="text" class="form-control" id="about_header" name="about_header" 
+                       value="<?php echo htmlspecialchars($about_data['header'] ?? ''); ?>" required />
+                <label for="about_header">Titre de la section *</label>
+            </div>
+
+            <div class="form-floating mb-4">
+                <textarea class="form-control" id="about_content" name="about_content" 
+                          style="height: 150px;" required><?php echo htmlspecialchars($about_data['content'] ?? ''); ?></textarea>
+                <label for="about_content">Contenu de la section *</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>Enregistrer la section À propos
+            </button>
+        </form>
     </div>
 </div>
 

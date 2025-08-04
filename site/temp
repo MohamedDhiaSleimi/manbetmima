@@ -1,0 +1,37 @@
+<header class="d-flex align-items-center justify-content-between py-3 px-4 border-bottom">
+
+  <!-- Left: logo + À propos button -->
+  <div class="d-flex align-items-center gap-3">
+    <a href="index" class="logo text-decoration-none text-dark fw-bold fs-4">
+      Manbet MiMa - منبت ميما
+    </a>
+
+    <form method="POST" action="index" class="m-0">
+      <input type="hidden" name="page" value="about" />
+      <button type="submit" class="btn btn-outline-primary btn-sm">
+        À propos
+      </button>
+    </form>
+  </div>
+
+  <!-- Right: search + dark mode toggle -->
+  <div class="d-flex align-items-center gap-3">
+
+    <!-- Search with arrow icon inside -->
+    <div class="position-relative">
+      <input
+        type="text"
+        class="form-control"
+        placeholder="Rechercher..."
+        id="searchInput"
+        style="padding-right: 2.5rem;"
+      />
+      <span class="advanced-search-arrow" title="Recherche avancée">&#9654;</span>
+    </div>
+
+    <!-- Dark mode toggle original style -->
+    <span class="dark-toggle" id="themeToggle" title="Mode sombre" style="cursor: pointer;">
+      <i class="fa-solid fa-moon" id="themeIcon"></i>
+    </span>
+  </div>
+</header>

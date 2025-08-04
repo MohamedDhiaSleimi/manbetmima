@@ -71,7 +71,7 @@ body {
 </form>
 
 <div class="text-center mt-3">
-<a href="index.html" class="text-decoration-none">
+<a href="index" class="text-decoration-none">
 <i class="fas fa-arrow-left me-2"></i>Retour au catalogue
 </a>
 </div>
