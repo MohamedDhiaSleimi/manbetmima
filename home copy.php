@@ -1,15 +1,3 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Catalogue de Plantes</title>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  
-</head>
-<body>
-
 <div class="container py-4">
   <div class="d-flex align-items-center gap-3">
     <input
@@ -63,30 +51,10 @@
   </div>
 </div>
 
-<!-- Floating Cart Button -->
-<div class="cart-icon">
-
-</div>
-
-<!-- Toast for cart notifications -->
-<div class="toast-container position-fixed bottom-0 end-0 p-3">
-  <div id="cartToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-    <div class="toast-header">
-      <i class="fas fa-check-circle text-success me-2"></i>
-      <strong class="me-auto">Panier</strong>
-      <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-    </div>
-    <div class="toast-body" id="toastMessage">
-      Plante ajoutée au panier!
-    </div>
-  </div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script>
   let allPlants = [];
   let filteredPlants = [];
-  let cart = JSON.parse(localStorage.getItem('plantCart') || '[]');
+  let contactData = {};
 
   const searchInput = document.getElementById("searchInput");
   const categoryFilter = document.getElementById("categoryFilter");
@@ -94,9 +62,6 @@
   const priceSort = document.getElementById("priceSort");
   const advancedToggle = document.getElementById("advancedToggle");
   const advancedFilters = document.getElementById("advancedFilters");
-
-  // Update cart count on page load
-  updateCartCount();
 
   advancedToggle.addEventListener("click", () => {
     advancedFilters.style.display =
@@ -106,7 +71,6 @@
         : "none";
   });
 
-  //data loading
   Promise.all([
     fetch("catalogue.json").then((res) => res.json()),
     fetch("categories.json").then((res) => res.json()),
@@ -176,6 +140,27 @@
       }
     }
     return lowestPrice;
+  }
+
+  function getPriceRange(plant) {
+    if (!plant.prices) return "Prix non disponible";
+    
+    const prices = [];
+    for (const size in plant.prices) {
+      if (plant.prices[size].available && plant.prices[size].price) {
+        const price = parseFloat(plant.prices[size].price);
+        if (!isNaN(price)) {
+          prices.push(price);
+        }
+      }
+    }
+    
+    if (prices.length === 0) return "Prix non disponible";
+    
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    
+    return min === max ? `${min.toFixed(2)} TND` : `${min.toFixed(2)} - ${max.toFixed(2)} TND`;
   }
 
   function getAvailableSizes(plant) {
@@ -260,89 +245,23 @@
                   : ""
               }
               <h5 class="card-title text-success">${plant.name}</h5>
-              ${duree_de_vie ? `
-                <div class="d-flex align-items-center mb-2">
-                  <img src="./icons/lifespan.png" alt="" class="me-2" style="width:1.5em;height:1.5em;vertical-align:middle;">
-                  <div>
-                    <div class="fw-bold">${duree_de_vie}</div>
-                    <div class="text-muted small">Durée de vie</div>
-                  </div>
-                </div>` : ''}
-
-              ${type_de_plante ? `
-                <div class="d-flex align-items-center mb-2">
-                  <img src="./icons/planttype.png" alt="" class="me-2" style="width:1.5em;height:1.5em;vertical-align:middle;">
-                  <div>
-                    <div class="fw-bold">${type_de_plante}</div>
-                    <div class="text-muted small">Type</div>
-                  </div>
-                </div>` : ''}
-
-              ${hauteur_de_plante ? `
-                <div class="d-flex align-items-center mb-2">
-                  <img src="icons/plantheight.png" alt="" class="me-2" style="width:1.5em;height:1.5em;vertical-align:middle;">
-                  <div>
-                    <div class="fw-bold">${hauteur_de_plante}</div>
-                    <div class="text-muted small">Hauteur</div>
-                  </div>
-                </div>` : ''}
-
-              ${diametre_de_la_couronne ? `
-                <div class="d-flex align-items-center mb-2">
-                  <img src="icons/diamettre.png" alt="" class="me-2" style="width:1.5em;height:1.5em;vertical-align:middle;">
-                  <div>
-                    <div class="fw-bold">${diametre_de_la_couronne}</div>
-                    <div class="text-muted small">Diamètre</div>
-                  </div>
-                </div>` : ''}
-
-              ${temperature_ideale ? `
-                <div class="d-flex align-items-center mb-2">
-                  <img src="icons/tempideal.png" alt="" class="me-2" style="width:1.5em;height:1.5em;vertical-align:middle;">
-                  <div>
-                    <div class="fw-bold">${temperature_ideale}</div>
-                    <div class="text-muted small">Température</div>
-                  </div>
-                </div>` : ''}
-
-              ${arrosage ? `
-                <div class="d-flex align-items-center mb-2">
-                  <img src="icons/arrosage.png" alt="" class="me-2" style="width:1.5em;height:1.5em;vertical-align:middle;">
-                  <div>
-                    <div class="fw-bold">${arrosage}</div>
-                    <div class="text-muted small">Arrosage</div>
-                  </div>
-                </div>` : ''}
-
-              ${ensoleillement ? `
-                <div class="d-flex align-items-center mb-3">
-                  <img src="icons/enseilloment.png" alt="" class="me-2" style="width:1.5em;height:1.5em;vertical-align:middle;">
-                  <div>
-                    <div class="fw-bold">${ensoleillement}</div>
-                    <div class="text-muted small">ensoleillement</div>
-                  </div>
-                </div>` : ''}
-
+              ${duree_de_vie ? `<p class="card-text">Durée de vie: ${duree_de_vie}</p>` : ''}
+              ${type_de_plante ? `<p class="card-text">Type de plante: ${type_de_plante}</p>` : ''}
+              ${hauteur_de_plante ? `<p class="card-text">Hauteur de plante: ${hauteur_de_plante}</p>` : ''}
+              ${diametre_de_la_couronne ? `<p class="card-text">Diamètre de la couronne: ${diametre_de_la_couronne}</p>` : ''}
+              ${temperature_ideale ? `<p class="card-text">Température idéale: ${temperature_ideale}</p>` : ''}
+              ${arrosage ? `<p class="card-text">Arrosage: ${arrosage}</p>` : ''}
+              ${ensoleillement ? `<p class="card-text">Ensoleillement: ${ensoleillement}</p>` : ''}
               ${availableSizes.length > 0 ? `
                 <div class="mb-2">
-                  <select class="form-select form-select-sm" id="size${plant.id}" onchange="updatePrice(this, ${plant.id})">
+                  <select class="form-select form-select-sm" onchange="updatePrice(this, ${plantIndex})">
                     ${availableSizes.map(size => `
                       <option value="${size}" data-price="${plant.prices[size].price}">${size}</option>
                     `).join('')}
                   </select>
                 </div>
               ` : ''}
-              
-              <div class="mt-auto">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <span class="price-badge" id="price${plant.id}">${defaultPrice ? parseFloat(defaultPrice).toFixed(2) + ' TND' : 'Prix non disponible'}</span>
-                </div>
-                <button class="btn btn-add-to-cart w-100" 
-                        onclick="addToCart(${plant.id})" 
-                        ${availableSizes.length === 0 ? 'disabled' : ''}>
-                  <i class="fas fa-cart-plus me-2"></i>Ajouter au panier
-                </button>
-              </div>
+              <span class="price-badge align-self-start" id="price${plantIndex}">${defaultPrice ? parseFloat(defaultPrice).toFixed(2) + ' TND' : 'Prix non disponible'}</span>
             </div>
           </div>
         </div>`;
@@ -358,89 +277,15 @@
     noResults.querySelector("p").textContent = msg;
   }
 
-  function updatePrice(selectElement, plantId) {
-    const selectedOption = selectElement.options[selectElement.selectedIndex];
-    const price = selectedOption.getAttribute('data-price');
-    const priceElement = document.getElementById(`price${plantId}`);
-    priceElement.textContent = price ? parseFloat(price).toFixed(2) + ' TND' : 'Prix non disponible';
-  }
-
-  function addToCart(plantId) {
-    const plant = allPlants.find(p => p.id === plantId);
-    if (!plant) return;
-
-    const sizeSelect = document.getElementById(`size${plantId}`);
-    const selectedSize = sizeSelect ? sizeSelect.value : getAvailableSizes(plant)[0];
-    const price = plant.prices[selectedSize]?.price;
-
-    if (!price) {
-      showToast('Erreur: Prix non disponible', 'error');
-      return;
-    }
-
-    // Check if item already exists in cart
-    const existingItemIndex = cart.findIndex(item => 
-      item.plantId === plantId && item.size === selectedSize
-    );
-
-    if (existingItemIndex > -1) {
-      cart[existingItemIndex].quantity += 1;
-    } else {
-      cart.push({
-        plantId: plantId,
-        name: plant.name,
-        size: selectedSize,
-        price: parseFloat(price),
-        quantity: 1,
-        image: plant.photos && plant.photos[0] ? plant.photos[0] : null,
-        category: plant.category
-      });
-    }
-
-    // Save to localStorage
-    localStorage.setItem('plantCart', JSON.stringify(cart));
-    
-    updateCartCount();
-    showToast(`${plant.name} (${selectedSize}) ajouté au panier!`);
-  }
-
-  function updateCartCount() {
-    const count = cart.reduce((total, item) => total + item.quantity, 0);
-    const countElement = document.getElementById('cartCount');
-    
-    if (count > 0) {
-      countElement.textContent = count;
-      countElement.style.display = 'block';
-    } else {
-      countElement.style.display = 'none';
-    }
-  }
-
-  function showToast(message, type = 'success') {
-    const toast = document.getElementById('cartToast');
-    const toastMessage = document.getElementById('toastMessage');
-    const toastHeader = toast.querySelector('.toast-header');
-    
-    toastMessage.textContent = message;
-    
-    // Change icon and color based on type
-    const icon = toastHeader.querySelector('i');
-    if (type === 'error') {
-      icon.className = 'fas fa-exclamation-circle text-danger me-2';
-    } else {
-      icon.className = 'fas fa-check-circle text-success me-2';
-    }
-    
-    const bsToast = new bootstrap.Toast(toast);
-    bsToast.show();
-  }
-
-  // Event listeners
   searchInput.addEventListener("input", filterAndDisplayPlants);
   categoryFilter.addEventListener("change", filterAndDisplayPlants);
   sizeFilter.addEventListener("change", filterAndDisplayPlants);
   priceSort.addEventListener("change", filterAndDisplayPlants);
-</script>
 
-</body>
-</html>
+  function updatePrice(selectElement, plantIndex) {
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const price = selectedOption.getAttribute('data-price');
+    const priceElement = document.getElementById(`price${plantIndex}`);
+    priceElement.textContent = price ? parseFloat(price).toFixed(2) + ' TND' : 'Prix non disponible';
+  }
+</script>
