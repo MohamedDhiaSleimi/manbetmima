@@ -60,19 +60,19 @@
         <nav class="d-flex gap-4">
           <form method="POST" action="index" class="m-0">
             <input type="hidden" name="page" value="about" />
-            <button type="submit" class="btn btn-link p-0 text-primary fw-semibold" style="text-decoration: none;color: black; ">
+            <button type="submit" class="btn btn-link p-0 text-primary fw-semibold" style="text-decoration: none;color: black !important; ">
               À propos
             </button>
           </form>
           <form method="POST" action="index" class="m-0">
             <input type="hidden" name="page" value="offers" />
-            <button type="submit" class="btn btn-link p-0 text-primary fw-semibold" style="text-decoration: none;color: black; ">
+            <button type="submit" class="btn btn-link p-0 text-primary fw-semibold" style="text-decoration: none;color: black !important; ">
               Offres
             </button>
           </form>
           <form method="POST" action="index" class="m-0">
             <input type="hidden" name="page" value="catalogue" />
-            <button type="submit" class="btn btn-link p-0 text-primary fw-semibold" style="text-decoration: none;color: black; ">
+            <button type="submit" class="btn btn-link p-0 text-primary fw-semibold" style="text-decoration: none;color: black !important; ">
               Catalogue
             </button>
           </form>
@@ -84,12 +84,15 @@
 
     <!-- Main Content or About Page -->
     <div class="container py-4">
+      <blockquote class="imgur-embed-pub" lang="en" data-id="gZB89y1"><a href="https://photos.app.goo.gl/PNi17TaX3kJQ787V8">View post on imgur.com</a></blockquote><script async src="https://photos.app.goo.gl/PNi17TaX3kJQ787V8" charset="utf-8"></script>
       <?php
         $page = $_POST['page'] ?? 'main';
         if ($page === 'about') {
           include 'about.php';
+        } elseif ($page === 'offers') {
+          include 'offers.php';
         } else {
-          include 'home.php';
+          include 'catalogue.php';
         }
       ?>
     </div>
