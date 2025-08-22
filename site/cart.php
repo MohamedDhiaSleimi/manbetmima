@@ -1,3 +1,40 @@
+<?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
+    $orderFile = './storage/binary/orders.bin'; // change extension to indicate binary storage
+
+    // Load existing orders (deserialize)
+    if (file_exists($orderFile)) {
+        $orders = @unserialize(file_get_contents($orderFile));
+        if (!is_array($orders)) {
+            $orders = [];
+        }
+    } else {
+        $orders = [];
+    }
+
+    $newOrder = [
+        'id' => uniqid('order_'),
+        'customer' => [
+            'name' => $_POST['name'] ?? '',
+            'email' => $_POST['email'] ?? '',
+            'phone' => $_POST['phone'] ?? '',
+            'address' => $_POST['address'] ?? ''
+        ],
+        'cart' => json_decode($_POST['cart_data'], true), // cart JSON is fine
+        'total' => $_POST['total_amount'],
+        'date' => date('Y-m-d H:i:s')
+    ];
+
+    $orders[] = $newOrder;
+
+    // Save orders (serialize)
+    file_put_contents($orderFile, serialize($orders));
+
+    header('Location: index');
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -6,6 +43,7 @@
   <title>Mon Panier - Catalogue de Plantes</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link rel="icon" href="./icons/logo2.png" type="image/png" />
   <style>
     .cart-item {
       border: none;
@@ -250,10 +288,10 @@
           <strong class="total-price" id="total">5.00 TND</strong>
         </div>
         
-        <button class="btn checkout-btn w-100 mb-2" id="checkoutBtn">
+        <button class="btn checkout-btn w-100 mb-2" data-bs-toggle="modal" data-bs-target="#checkoutModal" id="checkoutBtn">
           <i class="fas fa-credit-card me-2"></i>Procéder au paiement
         </button>
-        
+
         <button class="btn continue-shopping-btn w-100" onclick="window.location.href='index'">
           <i class="fas fa-arrow-left me-2"></i>Continuer mes achats
         </button>
@@ -271,6 +309,34 @@
     <button class="btn checkout-btn" onclick="window.location.href='index'">
       <i class="fas fa-seedling me-2"></i>Découvrir nos plantes
     </button>
+  </div>
+</div>
+
+<!-- Checkout Modal -->
+<div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" id="checkoutForm">
+        <div class="modal-header">
+          <h5 class="modal-title">Informations de livraison</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="cart_data" id="cartData">
+          <input type="hidden" name="total_amount" id="totalAmount">
+
+          <input type="text" name="name" class="form-control mb-2" placeholder="Nom complet" required>
+          <input type="email" name="email" class="form-control mb-2" placeholder="Email" required>
+          <input type="text" name="phone" class="form-control mb-2" placeholder="Téléphone" required>
+          <textarea name="address" class="form-control mb-2" placeholder="Adresse de livraison" required></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" name="checkout" class="btn checkout-btn">
+            <i class="fas fa-credit-card me-2"></i>Confirmer la commande
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -315,6 +381,13 @@
     emptyCartContainer.style.display = 'none';
     cartSummaryContainer.style.display = 'block';
 
+    const labels = {
+      S: "Petit pot en plastique",
+      M: "Moyen pot en plastique",
+      L: "Moyen pot en poterie",
+      XL: "Petit pot en poterie"
+    };
+
     cartItemsContainer.innerHTML = cart.map((item, index) => `
       <div class="card cart-item mb-3">
         <div class="card-body">
@@ -331,9 +404,12 @@
             <div class="col-md-4 col-sm-9">
               <h6 class="mb-1">${item.name}</h6>
               ${item.category ? `<span class="category-badge">${item.category}</span>` : ''}
-              <p class="text-muted mb-1">Taille: ${item.size}</p>
+              <p class="text-muted mb-1">
+                Taille: ${labels[item.size] || item.size}
+              </p>
               <p class="text-success mb-0 fw-bold">${item.price.toFixed(2)} TND</p>
             </div>
+
             
             <div class="col-md-3 col-sm-6">
               <div class="quantity-control">
@@ -457,26 +533,20 @@
   }
 
   // Checkout functionality
-  document.getElementById('checkoutBtn').addEventListener('click', function() {
-    if (cart.length === 0) return;
-
-    // Simple checkout simulation
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shipping = total >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
-    const finalTotal = total + shipping;
-
-    const confirmed = confirm(`Confirmer votre commande?\n\nTotal: ${finalTotal.toFixed(2)} TND\nNombre d'articles: ${cart.reduce((sum, item) => sum + item.quantity, 0)}`);
-    
-    if (confirmed) {
-      // In a real application, this would send the order to a server
-      showToast('Commande confirmée! Vous allez recevoir un email de confirmation.', 'success');
-      
-      // Clear cart after successful order
-      setTimeout(() => {
-        clearCart();
-        window.location.href = 'index';
-      }, 2000);
+  // Prepare checkout form data before submit
+  document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+    if (cart.length === 0) {
+      e.preventDefault();
+      showToast('Votre panier est vide', 'error');
+      return;
     }
+
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+    const finalTotal = subtotal + shipping;
+
+    document.getElementById('cartData').value = JSON.stringify(cart);
+    document.getElementById('totalAmount').value = finalTotal.toFixed(3);
   });
 
   // Add keyboard shortcuts

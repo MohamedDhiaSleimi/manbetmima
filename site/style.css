@@ -6,7 +6,7 @@
   --card-bg-light: #ffffff;
   --accent-light: #22c55e;
   --desc-light: #6b7280;
-  
+
   /* Dark Theme Colors */
   --bg-dark: #121212;
   --text-dark: #f5f5f5;
@@ -14,7 +14,7 @@
   --accent-dark: #16a34a;
   --desc-dark: #cccccc;
   --card-border-dark: #333;
-  
+
   /* Default Theme (Light) */
   --bg: var(--bg-light);
   --text: var(--text-light);
@@ -133,6 +133,10 @@ header {
   transition: color 0.3s ease;
 }
 
+.logo {
+  font-family: "Baloo 2", cursive;
+}
+
 /* ===== PLANT CARDS ===== */
 .plant-card {
   background-color: var(--card-bg);
@@ -241,13 +245,21 @@ footer a {
 }
 
 @keyframes rotateSun {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(180deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(180deg);
+  }
 }
 
 @keyframes rotateMoon {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(-180deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-180deg);
+  }
 }
 
 /* ===== UTILITIES ===== */

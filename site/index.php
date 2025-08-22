@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Catalogue de Plantes ManbetMiMa</title>
-    <link rel="icon" href="./icons/logo.png" type="image/png" />
+    <link rel="icon" href="./icons/logo2.png" type="image/png" />
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -18,9 +18,7 @@
       rel="stylesheet"
     />
     <style>
-      .logo {
-        font-family: 'Baloo 2', cursive;
-      }
+     
     </style>
     <link href="style.css" rel="stylesheet" />
   </head>
@@ -46,11 +44,6 @@
           <span class="d-flex align-items-center" id="cartButton" title="Panier" style="cursor:pointer;" onclick="window.location.href='cart'">
             <i class="fa-solid fa-shopping-cart"></i>
             <span class="cart-badge" id="cartCount" style="display: none;">0</span>
-          </span>
-
-          <!-- Theme toggle -->
-          <span class="dark-toggle d-flex align-items-center" id="themeToggle" title="Mode sombre" style="cursor:pointer;">
-            <i class="fa-solid fa-moon" id="themeIcon"></i>
           </span>
         </div>
       </div>
@@ -84,7 +77,6 @@
 
     <!-- Main Content or About Page -->
     <div class="container py-4">
-      <blockquote class="imgur-embed-pub" lang="en" data-id="gZB89y1"><a href="https://photos.app.goo.gl/PNi17TaX3kJQ787V8">View post on imgur.com</a></blockquote><script async src="https://photos.app.goo.gl/PNi17TaX3kJQ787V8" charset="utf-8"></script>
       <?php
         $page = $_POST['page'] ?? 'main';
         if ($page === 'about') {
@@ -105,7 +97,6 @@
 
     <!-- Theme toggle & footer logic remain here -->
     <script>
-      const themeToggle = document.getElementById("themeToggle");
       const themeIcon = document.getElementById("themeIcon");
       const html = document.documentElement;
   
@@ -131,35 +122,7 @@
       showNoResults("Erreur de chargement. Réessayez plus tard.");
     });
 
-      function updateIcon(theme) {
-        themeIcon.classList.remove("rotate-sun", "rotate-moon");
-        if (theme === "dark") {
-          themeIcon.classList.remove("fa-moon");
-          themeIcon.classList.add("fa-sun");
-          void themeIcon.offsetWidth;
-          themeIcon.classList.add("rotate-sun");
-        } else {
-          themeIcon.classList.remove("fa-sun");
-          themeIcon.classList.add("fa-moon");
-          void themeIcon.offsetWidth;
-          themeIcon.classList.add("rotate-moon");
-        }
-      }
-
-      themeToggle.addEventListener("click", () => {
-        const currentTheme = html.getAttribute("data-theme");
-        const newTheme = currentTheme === "dark" ? "light" : "dark";
-        html.setAttribute("data-theme", newTheme);
-        localStorage.setItem("theme", newTheme);
-        updateIcon(newTheme);
-      });
-      themeToggleMobile.addEventListener("click", () => {
-        const currentTheme = html.getAttribute("data-theme");
-        const newTheme = currentTheme === "dark" ? "light" : "dark";
-        html.setAttribute("data-theme", newTheme);
-        localStorage.setItem("theme", newTheme);
-        updateIcon(newTheme);
-      });
+      
 
       const savedTheme = localStorage.getItem("theme") || "light";
       html.setAttribute("data-theme", savedTheme);
@@ -178,7 +141,7 @@
           secondLine += ` ${contact.phone}`;
         }
 
-        secondLine = ` Tunis, Tunisie | ${secondLine}`;
+        secondLine = ` Ben Arous, Tunisie ${secondLine}`;
         contactHtml += `<p class="mb-0">${secondLine}</p>`;
 
         let socialLinks = [];
