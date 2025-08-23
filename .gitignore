@@ -3,3 +3,4 @@
 *.yml
 log/
 .bin
+tools/
