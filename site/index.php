@@ -79,12 +79,12 @@
     <div class="container py-4">
       <?php
         $page = $_POST['page'] ?? 'main';
-        if ($page === 'about') {
-          include 'about.php';
+        if ($page === 'catalogue') {
+          include 'catalogue.php'; 
         } elseif ($page === 'offers') {
           include 'offers.php';
         } else {
-          include 'catalogue.php';
+          include 'about.php';
         }
       ?>
     </div>
@@ -96,78 +96,65 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Theme toggle & footer logic remain here -->
-    <script>
-      const themeIcon = document.getElementById("themeIcon");
-      const html = document.documentElement;
-  
-      Promise.all([
-      fetch("contact.json")
-      .then((res) => {
-        if (!res.ok) throw new Error("Contact file not found");
-        return res.json();
-      })
-      .catch((error) => {
-        console.log("Contact file not found or invalid, using defaults");
-        return {};
-      }),
-  ])
-    .then(([contactInfo]) => {
-      contactData = contactInfo;
-      if (typeof updateFooterContact === "function") {
-        updateFooterContact(contactData);
-      }
-    })
-    .catch((error) => {
-      console.error("Erreur lors du chargement :", error);
-      showNoResults("Erreur de chargement. Réessayez plus tard.");
-    });
+  <script>
+ const html = document.documentElement;
 
-      
+  <?php
+    $binFile = "./storage/binary/contact.bin";
+    if (!file_exists($binFile)) {
+        // Create default contact.bin if missing
+        $default = [
+            "email" => "info@example.com",
+            "phone" => "+21612345678"
+        ];
+        file_put_contents($binFile, serialize($default));
+    }
+    $contactData = @unserialize(file_get_contents($binFile));
+    if ($contactData === false) $contactData = [];
+    echo "const contactData = ".json_encode($contactData).";";
+  ?>
 
-      const savedTheme = localStorage.getItem("theme") || "light";
-      html.setAttribute("data-theme", savedTheme);
-      updateIcon(savedTheme);
+  if (typeof updateFooterContact === "function") {
+      updateFooterContact(contactData);
+  }
 
-      function updateFooterContact(contact) {
-        const footerContact = document.getElementById("footerContact");
-        let contactHtml = "";
+  function updateFooterContact(contact) {
+    const footerContact = document.getElementById("footerContact");
+    let contactHtml = "";
 
-        if (contact && contact.email && contact.email.trim() !== "") {
-          contactHtml += `<p class="mb-1"> Contact : <a href="mailto:${contact.email}" style="color: black">${contact.email}</a></p>`;
-        }
+    if (contact && contact.email && contact.email.trim() !== "") {
+      contactHtml += `<p class="mb-1"> Contact : <a href="mailto:${contact.email}" style="color: black">${contact.email}</a></p>`;
+    }
 
-        let secondLine = "";
-        if (contact && contact.phone && contact.phone.trim() !== "") {
-          secondLine += ` ${contact.phone}`;
-        }
+    let secondLine = "";
+    if (contact && contact.phone && contact.phone.trim() !== "") {
+      secondLine += ` ${contact.phone}`;
+    }
 
-        secondLine = ` Ben Arous, Tunisie ${secondLine}`;
-        contactHtml += `<p class="mb-0">${secondLine}</p>`;
+    secondLine = ` Ben Arous, Tunisie ${secondLine}`;
+    contactHtml += `<p class="mb-0">${secondLine}</p>`;
 
-        let socialLinks = [];
-        if (contact && contact.facebook)
-          socialLinks.push(`<a href="${contact.facebook}" target="_blank" title="Facebook"><i class="fab fa-facebook" style="color: black"></i></a>`);
-        if (contact && contact.instagram)
-          socialLinks.push(`<a href="${contact.instagram}" target="_blank" title="Instagram"><i class="fab fa-instagram" style="color: black"></i></a>`);
-        if (contact && contact.whatsapp)
-          socialLinks.push(`<a href="${contact.whatsapp}" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"style="color: black"></i></a>`);
-        if (contact && contact.tiktok)
-          socialLinks.push(`<a href="${contact.tiktok}" target="_blank" title="TikTok"><i class="fab fa-tiktok"style="color: black"></i></a>`);
-        if (contact && contact.twitter)
-          socialLinks.push(`<a href="${contact.twitter}" target="_blank" title="Twitter"><i class="fab fa-twitter"style="color: black"></i></a>`);
-        if (contact && contact.bluesky)
-          socialLinks.push(`<a href="${contact.bluesky}" target="_blank" title="Bluesky"><i class="fas fa-cloud"style="color: black"></i></a>`);
+    let socialLinks = [];
+    if (contact && contact.facebook)
+      socialLinks.push(`<a href="${contact.facebook}" target="_blank" title="Facebook"><i class="fab fa-facebook" style="color: black"></i></a>`);
+    if (contact && contact.instagram)
+      socialLinks.push(`<a href="${contact.instagram}" target="_blank" title="Instagram"><i class="fab fa-instagram" style="color: black"></i></a>`);
+    if (contact && contact.whatsapp)
+      socialLinks.push(`<a href="${contact.whatsapp}" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"style="color: black"></i></a>`);
+    if (contact && contact.tiktok)
+      socialLinks.push(`<a href="${contact.tiktok}" target="_blank" title="TikTok"><i class="fab fa-tiktok"style="color: black"></i></a>`);
+    if (contact && contact.twitter)
+      socialLinks.push(`<a href="${contact.twitter}" target="_blank" title="Twitter"><i class="fab fa-twitter"style="color: black"></i></a>`);
+    if (contact && contact.bluesky)
+      socialLinks.push(`<a href="${contact.bluesky}" target="_blank" title="Bluesky"><i class="fas fa-cloud"style="color: black"></i></a>`);
 
-        if (socialLinks.length > 0) {
-          contactHtml += `<p class="mb-0 mt-2" style="font-size: 1.2rem;">${socialLinks.join(" ")}</p>`;
-        }
+    if (socialLinks.length > 0) {
+      contactHtml += `<p class="mb-0 mt-2" style="font-size: 1.2rem;">${socialLinks.join(" ")}</p>`;
+    }
 
-        footerContact.innerHTML = contactHtml;
-      }
-
-      
-     
-
-    </script>
+    footerContact.innerHTML = contactHtml;
+  }
+</script>
+ 
   </body>
 </html>

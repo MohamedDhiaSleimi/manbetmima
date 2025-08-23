@@ -312,7 +312,7 @@ if (file_exists($categoriesFile)) {
 
             <div class="mt-auto">
               <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="price-badge" id="price-${uid}">${defaultPrice ? parseFloat(defaultPrice).toFixed(2) + ' TND' : 'Bientot disponible'}</span>
+                <span class="price-badge" id="price-${uid}">${defaultPrice ? parseFloat(defaultPrice).toFixed(2) + ' TND' : 'Bientot disponible!'}</span>
               </div>
               <button class="btn btn-add-to-cart w-100" onclick="addToCart(${plantIndex})" ${availableSizes.length === 0 ? 'disabled' : ''}>
                 <i class="fas fa-cart-plus me-2"></i>Ajouter au panier

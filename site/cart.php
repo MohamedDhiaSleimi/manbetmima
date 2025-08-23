@@ -22,7 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
         ],
         'cart' => json_decode($_POST['cart_data'], true), // cart JSON is fine
         'total' => $_POST['total_amount'],
-        'date' => date('Y-m-d H:i:s')
+        'date' => date('Y-m-d H:i:s'),
+        'status' => 'pending'
     ];
 
     $orders[] = $newOrder;
@@ -76,15 +77,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
       border-radius: 0.5rem;
       text-align: center;
       padding: 0.5rem;
-    }
-    
-    .category-badge {
-      background: linear-gradient(135deg, #4caf50, #66bb6a);
-      color: white;
-      font-size: 0.75rem;
-      padding: 0.25rem 0.75rem;
-      border-radius: 1rem;
-      font-weight: 600;
     }
     
     .quantity-control {
@@ -280,12 +272,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
         </div>
         <div class="d-flex justify-content-between mb-2">
           <span>Frais de livraison:</span>
-          <span id="shipping">5.00 TND</span>
+          <span id="shipping">FREE</span>
         </div>
         <hr>
         <div class="d-flex justify-content-between mb-3">
           <strong>Total:</strong>
-          <strong class="total-price" id="total">5.00 TND</strong>
+          <strong class="total-price" id="total">0.00 TND</strong>
         </div>
         
         <button class="btn checkout-btn w-100 mb-2" data-bs-toggle="modal" data-bs-target="#checkoutModal" id="checkoutBtn">
@@ -304,7 +296,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
 <div class="container" id="emptyCart" style="display: none;">
   <div class="empty-cart">
     <i class="fas fa-shopping-cart"></i>
-    <h3 class="mb-3">Votre panier est vide</h3>
+    <h3 class="mb-3">Votre panier est empty</h3>
     <p class="text-muted mb-4">Découvrez notre belle collection de plantes et commencez votre jardin!</p>
     <button class="btn checkout-btn" onclick="window.location.href='index'">
       <i class="fas fa-seedling me-2"></i>Découvrir nos plantes
@@ -357,10 +349,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script>
   let cart = JSON.parse(localStorage.getItem('plantCart') || '[]');
-  const SHIPPING_COST = 5.00;
+  const SHIPPING_COST = 0.00;
   const FREE_SHIPPING_THRESHOLD = 100.00;
 
-  // Load cart on page load
+  function getRealSize(sizeCode) {
+    switch(sizeCode) {
+      case 'S': return "Petit pot en plastique";
+      case 'M': return "Moyen pot en plastique";
+      case 'L': return "Moyen pot en poterie";
+      case 'XL': return "Petit pot en poterie";
+      default: return sizeCode || '';
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
     displayCart();
     updateSummary();
@@ -381,13 +382,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
     emptyCartContainer.style.display = 'none';
     cartSummaryContainer.style.display = 'block';
 
-    const labels = {
-      S: "Petit pot en plastique",
-      M: "Moyen pot en plastique",
-      L: "Moyen pot en poterie",
-      XL: "Petit pot en poterie"
-    };
-
     cartItemsContainer.innerHTML = cart.map((item, index) => `
       <div class="card cart-item mb-3">
         <div class="card-body">
@@ -403,9 +397,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
             
             <div class="col-md-4 col-sm-9">
               <h6 class="mb-1">${item.name}</h6>
-              ${item.category ? `<span class="category-badge">${item.category}</span>` : ''}
               <p class="text-muted mb-1">
-                Taille: ${labels[item.size] || item.size}
+                Taille: ${getRealSize(item.size)}
               </p>
               <p class="text-success mb-0 fw-bold">${item.price.toFixed(2)} TND</p>
             </div>
@@ -476,7 +469,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
     
     document.getElementById('total').textContent = `${total.toFixed(2)} TND`;
 
-    // Update checkout button
     const checkoutBtn = document.getElementById('checkoutBtn');
     if (cart.length === 0) {
       checkoutBtn.disabled = true;
@@ -486,10 +478,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
       checkoutBtn.innerHTML = '<i class="fas fa-credit-card me-2"></i>Procéder au paiement';
     }
 
-    // Show free shipping message
     if (subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD) {
       const remaining = FREE_SHIPPING_THRESHOLD - subtotal;
-      showToast(`Ajoutez ${remaining.toFixed(2)} TND pour bénéficier de la livraison gratuite!`, 'info');
+      showToast(`la livraison est gratuite!`, 'info');
     }
   }
 
@@ -512,7 +503,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
     
     toastMessage.textContent = message;
     
-    // Change icon and color based on type
     const icon = toastHeader.querySelector('i');
     switch(type) {
       case 'error':
@@ -532,8 +522,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
     bsToast.show();
   }
 
-  // Checkout functionality
-  // Prepare checkout form data before submit
   document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     if (cart.length === 0) {
       e.preventDefault();
@@ -545,13 +533,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
     const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
     const finalTotal = subtotal + shipping;
 
-    document.getElementById('cartData').value = JSON.stringify(cart);
+    const cartWithRealSizes = cart.map(item => ({
+      ...item,
+      size: getRealSize(item.size)
+    }));
+
+    document.getElementById('cartData').value = JSON.stringify(cartWithRealSizes);
     document.getElementById('totalAmount').value = finalTotal.toFixed(3);
   });
 
-  // Add keyboard shortcuts
   document.addEventListener('keydown', function(e) {
-    // Press 'C' to clear cart (with confirmation)
     if (e.key.toLowerCase() === 'c' && e.ctrlKey) {
       e.preventDefault();
       if (cart.length > 0 && confirm('Voulez-vous vraiment vider votre panier?')) {
@@ -559,7 +550,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
       }
     }
     
-    // Press Escape to go back to catalog
     if (e.key === 'Escape') {
       window.location.href = 'index';
     }

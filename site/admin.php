@@ -6,6 +6,26 @@ if ( !isset( $_SESSION[ 'admin_logged_in' ] ) || $_SESSION[ 'admin_logged_in' ] 
     header( 'Location: login' );
     exit();
 }
+
+// Store active tab in session
+$active_tab = $_SESSION['active_tab'] ?? 'plants';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    // Set active tab based on the action
+    $action = $_POST['action'];
+    if (strpos($action, 'plant') !== false) {
+        $active_tab = 'plants';
+    } elseif (strpos($action, 'category') !== false) {
+        $active_tab = 'categories';
+    } elseif (strpos($action, 'contact') !== false) {
+        $active_tab = 'contact';
+    } elseif (strpos($action, 'about') !== false) {
+        $active_tab = 'about';
+    } elseif (strpos($action, 'order') !== false || $action === 'fulfill_order') {
+        $active_tab = 'orders';
+    }
+    $_SESSION['active_tab'] = $active_tab;
+}
+
 // did not use a sql server because one at most they will need to store 250 plants, and two I am not dealing with the hasle of setting that up
 // File paths
 const CATALOGUE_FILE = './storage/binary/catalogue.bin';
@@ -389,7 +409,7 @@ function handleAddCategory() {
     $new_cat = trim($_POST['category_name'] ?? '');
     
     if ($new_cat === '') {
-        setError('Le nom de la catégorie ne peut pas être vide.');
+        setError('Le nom de la catégorie ne peut pas être empty.');
         return;
     }
     
@@ -455,13 +475,14 @@ function handleStartEditOrder() {
 
 function handleEditOrder() {
     global $orders, $edit_order_index, $edit_order_data;
+
     $index = (int)($_POST['index'] ?? -1);
     if (!isset($orders[$index])) {
         setError('Commande introuvable pour mise à jour.');
         return;
     }
 
-    // Update customer fields & total/status (keep cart immutable here)
+    // Update customer fields & total/status (keep cart immutable)
     $orders[$index]['customer']['name']    = trim($_POST['name'] ?? '');
     $orders[$index]['customer']['email']   = trim($_POST['email'] ?? '');
     $orders[$index]['customer']['phone']   = trim($_POST['phone'] ?? '');
@@ -536,32 +557,39 @@ function handleFulfillOrder() {
     }
 }
 
-// Process POST requests
+$actions = [
+    // Contact & About
+    'update_contact'   => ['fn' => 'handleUpdateContact', 'redirect' => true],
+    'update_about'     => ['fn' => 'handleUpdateAbout',   'redirect' => true],
+
+    // Plants
+    'add_plant'        => ['fn' => 'handleAddPlant',      'redirect' => true],
+    'start_edit_plant' => ['fn' => 'handleStartEditPlant','redirect' => false],
+    'edit_plant'       => ['fn' => 'handleEditPlant',     'redirect' => true],
+    'delete_plant'     => ['fn' => 'handleDeletePlant',   'redirect' => true],
+
+    // Categories
+    'add_category'     => ['fn' => 'handleAddCategory',   'redirect' => true],
+    'delete_category'  => ['fn' => 'handleDeleteCategory','redirect' => true],
+
+    // Orders
+    'start_edit_order' => ['fn' => 'handleStartEditOrder','redirect' => false],
+    'edit_order'       => ['fn' => 'handleEditOrder',     'redirect' => true],
+    'delete_order'     => ['fn' => 'handleDeleteOrder',   'redirect' => true],
+    'fulfill_order'    => ['fn' => 'handleFulfillOrder',  'redirect' => true]
+];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
-    $actions = [
-        // Contact & About
-        'update_contact'     => 'handleUpdateContact',
-        'update_about'       => 'handleUpdateAbout',
-        // Plants 
-        'add_plant'          => 'handleAddPlant',
-        'start_edit_plant'   => 'handleStartEditPlant',
-        'edit_plant'         => 'handleEditPlant',
-        'delete_plant'       => 'handleDeletePlant',
-        // Categories
-        'add_category'       => 'handleAddCategory',
-        'delete_category'    => 'handleDeleteCategory',
-        // Orders
-        'start_edit_order'   => 'handleStartEditOrder',
-        'edit_order'         => 'handleEditOrder',
-        'delete_order'       => 'handleDeleteOrder',
-        'fulfill_order'      => 'handleFulfillOrder'
-    ];
-    
     $action = $_POST['action'];
-    if (isset($actions[$action]) && function_exists($actions[$action])) {
-        $actions[$action]();
+    if (isset($actions[$action]) && function_exists($actions[$action]['fn'])) {
+        $actions[$action]['fn']();
+        if ($actions[$action]['redirect']) {
+            header("Location: " . $_SERVER['PHP_SELF']);
+            exit();
+        }
     }
 }
+
 
 // Helper function to process form data for both old and new formats
 function processPlantFormData($post_data) {
@@ -671,7 +699,16 @@ $storage = getStorageInfo();
             font-size: 12px;
         }
         .file-upload { border: 2px dashed #ddd; padding: 20px; text-align: center; margin: 10px 0; }
-        .file-upload.dragover { border-color: #007bff; background: #f8f9fa; }</style>
+        .file-upload.dragover { border-color: #007bff; background: #f8f9fa; }
+        .order-items { max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
+        .order-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #eee; }
+        .order-item:last-child { border-bottom: none; }
+        .order-item-details { flex: 2; }
+        .order-item-price { flex: 1; text-align: right; }
+        .cart-item-editable { background: #f9f9f9; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .cart-item-controls { display: flex; gap: 10px; margin-top: 5px; }
+        .cart-item-controls input { width: 60px; }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -704,15 +741,15 @@ $storage = getStorageInfo();
         <?php endif; ?>
 
         <div class="tabs">
-            <div class="tab active" onclick="showTab('plants')">Plants</div>
-            <div class="tab" onclick="showTab('categories')">Categories</div>
-            <div class="tab" onclick="showTab('contact')">Contact</div>
-            <div class="tab" onclick="showTab('about')">About</div>
-            <div class="tab" onclick="showTab('orders')">Orders</div>
+            <div class="tab <?php echo $active_tab === 'plants' ? 'active' : ''; ?>" onclick="showTab('plants')">Plants</div>
+            <div class="tab <?php echo $active_tab === 'categories' ? 'active' : ''; ?>" onclick="showTab('categories')">Categories</div>
+            <div class="tab <?php echo $active_tab === 'contact' ? 'active' : ''; ?>" onclick="showTab('contact')">Contact</div>
+            <div class="tab <?php echo $active_tab === 'about' ? 'active' : ''; ?>" onclick="showTab('about')">About</div>
+            <div class="tab <?php echo $active_tab === 'orders' ? 'active' : ''; ?>" onclick="showTab('orders')">Orders</div>
         </div>
 
         <!-- Plants Tab -->
-        <div id="plants" class="tab-content active">
+        <div id="plants" class="tab-content <?php echo $active_tab === 'plants' ? 'active' : ''; ?>">
             <h2>Manage Plants</h2>
             
             <?php if ($edit_plant_index !== null): ?>
@@ -937,7 +974,7 @@ function handleDrop(event, inputId) {
         </div>
 
         <!-- Categories Tab -->
-        <div id="categories" class="tab-content">
+        <div id="categories" class="tab-content <?php echo $active_tab === 'categories' ? 'active' : ''; ?>">
             <h2>Manage Categories</h2>
             
             <h3>Add Category</h3>
@@ -968,7 +1005,7 @@ function handleDrop(event, inputId) {
         </div>
 
         <!-- Contact Tab -->
-        <div id="contact" class="tab-content">
+        <div id="contact" class="tab-content <?php echo $active_tab === 'contact' ? 'active' : ''; ?>">
             <h2>Contact Information</h2>
             <form method="POST">
                 <input type="hidden" name="action" value="update_contact">
@@ -986,7 +1023,7 @@ function handleDrop(event, inputId) {
         </div>
 
         <!-- About Tab -->
-        <div id="about" class="tab-content">
+        <div id="about" class="tab-content <?php echo $active_tab === 'about' ? 'active' : ''; ?>">
             <h2>About Section</h2>
             <form method="POST">
                 <input type="hidden" name="action" value="update_about">
@@ -1007,7 +1044,7 @@ function handleDrop(event, inputId) {
         </div>
 
         <!-- Orders Tab -->
-        <div id="orders" class="tab-content">
+        <div id="orders" class="tab-content <?php echo $active_tab === 'orders' ? 'active' : ''; ?>">
             <h2>Orders</h2>
 
             <?php if ($edit_order_index !== null): ?>
@@ -1053,9 +1090,34 @@ function handleDrop(event, inputId) {
                     </div>
 
                     <div class="form-group">
-                        <label>Items (read-only)</label>
-                        <div class="plant-item" style="max-height:220px; overflow:auto; background:#fafafa;">
-                            <pre style="white-space:pre-wrap;"><?php echo htmlspecialchars(json_encode($edit_order_data['cart'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)); ?></pre>
+                        <label>Order Items</label>
+                        <div class="order-items">
+                            <?php 
+                            $cart = $edit_order_data['cart'] ?? [];
+                            $total = 0;
+                            foreach ($cart as $index => $item): 
+                                $itemTotal = ($item['price'] ?? 0) * ($item['quantity'] ?? 1);
+                                $total += $itemTotal;
+                            ?>
+                                <div class="cart-item-editable">
+                                    <div><strong><?php echo htmlspecialchars($item['name'] ?? 'Unknown Item'); ?></strong></div>
+                                    <div>Size: <?php echo htmlspecialchars($item['size'] ?? 'N/A'); ?></div>
+                                    <div>Price: <?php echo htmlspecialchars($item['price'] ?? 0); ?> TND</div>
+                                    <div class="cart-item-controls">
+                                        <label>Quantity:</label>
+                                        <input type="number" name="cart[<?php echo $index; ?>][quantity]" 
+                                               value="<?php echo htmlspecialchars($item['quantity'] ?? 1); ?>" min="1">
+                                        <input type="hidden" name="cart[<?php echo $index; ?>][name]" 
+                                               value="<?php echo htmlspecialchars($item['name'] ?? ''); ?>">
+                                        <input type="hidden" name="cart[<?php echo $index; ?>][size]" 
+                                               value="<?php echo htmlspecialchars($item['size'] ?? ''); ?>">
+                                        <input type="hidden" name="cart[<?php echo $index; ?>][price]" 
+                                               value="<?php echo htmlspecialchars($item['price'] ?? 0); ?>">
+                                        <input type="hidden" name="cart[<?php echo $index; ?>][image]" 
+                                               value="<?php echo htmlspecialchars($item['image'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
                     </div>
 
@@ -1078,6 +1140,21 @@ function handleDrop(event, inputId) {
                             <p><strong>Address:</strong> <?php echo htmlspecialchars($order['customer']['address'] ?? ''); ?></p>
                             <p><strong>Total:</strong> <?php echo htmlspecialchars($order['total'] ?? '0'); ?> TND</p>
                             <p><strong>Items:</strong> <?php echo count($order['cart'] ?? []); ?></p>
+                            
+                            <div class="order-items">
+                                <?php foreach ($order['cart'] ?? [] as $item): ?>
+                                    <div class="order-item">
+                                        <div class="order-item-details">
+                                            <strong><?php echo htmlspecialchars($item['name'] ?? 'Unknown Item'); ?></strong>
+                                            <div>Size: <?php echo htmlspecialchars($item['size'] ?? 'N/A'); ?></div>
+                                            <div>Quantity: <?php echo htmlspecialchars($item['quantity'] ?? 1); ?></div>
+                                        </div>
+                                        <div class="order-item-price">
+                                            <?php echo htmlspecialchars(($item['price'] ?? 0) * ($item['quantity'] ?? 1)); ?> TND
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
 
                             <form method="POST" style="display:inline;">
                                 <input type="hidden" name="action" value="start_edit_order">
@@ -1141,19 +1218,28 @@ function handleDrop(event, inputId) {
             
             // Add active class to clicked tab
             event.target.classList.add('active' );
+            
+            // Store active tab in session via AJAX
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', 'set_active_tab.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.send('tab=' + tabName);
         }
 
+        // Set initial active tab
         document.addEventListener('DOMContentLoaded', function() {
-        // Handle file input change for add plant form
-        const plantImagesInput = document.getElementById('plant_images');
-        if (plantImagesInput) {
-            plantImagesInput.addEventListener('change', function() {
-                previewImages(this, 'image_preview');
-            });
-        }
-        
-        // Handle file input change for edit plant form
-        const plantImagesEditInput = document.getElementById('plant_images_edit');
+            showTab('<?php echo $active_tab; ?>');
+            
+            // Handle file input change for add plant form
+            const plantImagesInput = document.getElementById('plant_images');
+            if (plantImagesInput) {
+                plantImagesInput.addEventListener('change', function() {
+                    previewImages(this, 'image_preview');
+                });
+            }
+            
+            // Handle file input change for edit plant form
+            const plantImagesEditInput = document.getElementById('plant_images_edit');
             if (plantImagesEditInput) {
                 plantImagesEditInput.addEventListener('change', function() {
                     previewImages(this, 'previewEdit');

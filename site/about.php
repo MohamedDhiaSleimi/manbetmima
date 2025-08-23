@@ -1,5 +1,5 @@
 <?php
-$aboutFile = 'about.bin'; // change extension to indicate binary
+$aboutFile = '.storage/binary/about.bin'; // change extension to indicate binary
 $showMessage = false;
 
 if (!file_exists($aboutFile)) {
